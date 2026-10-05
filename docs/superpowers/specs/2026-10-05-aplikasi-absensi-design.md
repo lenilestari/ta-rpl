@@ -23,9 +23,11 @@ self-registration.
 ## 3. Tech Stack
 
 - **Frontend:** Next.js 14+ (App Router, TypeScript)
-- **Backend/DB:** Supabase (Postgres + Auth), Row Level Security (RLS) aktif
+- **Backend/DB:** Supabase (Postgres + Auth + Storage), Row Level Security (RLS) aktif
 - **UI Library:**
-  - **antd** — untuk panel Admin (Layout, Sider, Table, Form)
+  - **antd** — untuk panel Admin (Layout, Sider, Table, Form). Sider memakai breakpoint
+    collapse + tombol hamburger, jadi di layar HP admin tetap bisa dipakai (sidebar jadi
+    drawer yang dibuka/tutup), bukan hanya dioptimalkan untuk desktop.
   - **antd-mobile** — untuk Dosen & Mahasiswa (TabBar sebagai bottom navigation, List, Dialog, Picker)
 - **Export laporan:** `xlsx` (Excel), print-to-PDF browser (PDF) — menghindari dependency PDF yang berat
 - **Deployment:** Vercel
@@ -55,11 +57,16 @@ sesi(id, jadwal_id, tanggal, dosen_lat, dosen_lng, radius_meter,
 
 absensi(id, sesi_id, mahasiswa_id, waktu_absen, lat, lng, jarak_meter)
 
-jurnal_mengajar(id, sesi_id, materi, capaian, catatan)
+jurnal_mengajar(id, sesi_id, materi, capaian, catatan, foto_url)
+  -- foto_url: path file di Supabase Storage, opsional
 ```
 
 Status "sesi aktif" dihitung on-the-fly (antara `opened_at` dan `closed_at`, atau
 `jam_selesai` jadwal jika `closed_at` belum diisi) — tanpa cron job/background worker.
+
+Foto dokumentasi jurnal mengajar disimpan di Supabase Storage (bucket privat, hanya
+dosen pemilik sesi & admin yang bisa mengunggah/melihat); `jurnal_mengajar.foto_url`
+menyimpan path filenya, bukan data biner.
 
 ## 5. Keamanan: RLS + Postgres Function
 
@@ -124,6 +131,5 @@ role, tech stack, cara setup lokal (env var Supabase, menjalankan migrasi SQL,
 
 - Multi-kampus/multi-institusi.
 - Self-registration akun (akun dibuat manual oleh Admin).
-- Upload foto dokumentasi jurnal mengajar.
 - Notifikasi push/real-time alert.
 - Cron job/auto-close sesi otomatis (status dihitung on-the-fly).
