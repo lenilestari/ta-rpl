@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { matchRoleRoutePrefix, isRoleAllowedForPath } from '@/lib/auth/route-guard'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -23,7 +24,33 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const path = request.nextUrl.pathname
+  const isAuthRoute = path === '/login'
+  const matchedPrefix = matchRoleRoutePrefix(path)
+
+  if (!user && matchedPrefix) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  if (user && isAuthRoute) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  if (user && matchedPrefix) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!isRoleAllowedForPath(path, profile?.role ?? null)) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+  }
 
   return response
 }
