@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# copyrighted reference material (not ours to redistribute)
+SDD-ieee-1016-2009.pdf
